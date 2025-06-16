@@ -173,9 +173,9 @@ export default function HeroSlider() {
                                             <h1 className="text-4xl md:text-7xl lg:text-9xl font-semibold tracking-wider bg-clip-text text-transparent bg-gradient-to-b from-white from-[20%] to-white/0 to-[80%] uppercase">
                                                 <MaskText text={slide.text || ""}/>
                                             </h1>
-                                            <p className="text-xs md:text-xl max-w-full w-full text-balance text-blue-ice">
+                                            <div className="text-xs md:text-xl max-w-full w-full text-balance text-blue-ice">
                                                 <TextReveal text={slide.subtext || ""} />
-                                            </p>
+                                            </div>
                                             <div className="flex flex-col sm:flex-row gap-4 mt-8">
                                                 <Link href="/explore">
                                                     <Button className="font-onest md:w-fit gap-2 backdrop-blur-sm bg-transparent border border-white/70 text-xs w-40 md:text-base md:text-lg md:w-48 hover:bg-white/10 transition-colors">

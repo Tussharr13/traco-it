@@ -4,6 +4,7 @@ import type React from "react"
 
 import { createContext, useContext, useEffect, useState } from "react"
 import { supabase, type UserDetails } from "@/app/lib/supabase"
+import { toast } from "@/hooks/use-toast"
 
 type AuthContextType = {
   user: UserDetails | null
@@ -58,6 +59,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
+    toast({
+      title: error ? "Sign In Failed" : "Sign In Successful",
+      description: error ? error.message : "Welcome back!",
+      variant: error ? "destructive" : "success",
+    })
     return { error }
   }
 
@@ -71,6 +77,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         name: email.split("@")[0],
       })
     }
+    toast({
+      title: error ? "Sign Up Failed" : "Sign Up Successful",
+      description: error ? error.message : "Welcome aboard!",
+      variant: error ? "destructive" : "success",
+    })
 
     return { error }
   }
@@ -88,6 +99,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   })
 
     setUser(null)
+    toast({
+      title: "Sign Out Successful",
+      description: "You have been signed out.",
+      variant: "success",
+    })
   }
 
   return <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>{children}</AuthContext.Provider>

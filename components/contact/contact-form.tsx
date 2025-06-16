@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useToast } from '@/components/ui/use-toast'
+// import { useToast } from '@/components/ui/use-toast'
 import { supabase } from '@/lib/supabase'
 import { z } from 'zod'
+import ToastTester from '../toasttester'
+import { toast } from "@/hooks/use-toast"
 
 // Form validation schema
 const formSchema = z.object({
@@ -27,7 +29,7 @@ export function ContactForm() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { toast } = useToast()
+  // const { toast } = useToast()
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -117,6 +119,7 @@ export function ContactForm() {
       toast({
         title: 'Message Sent',
         description: 'Thank you for contacting us. We will get back to you soon!',
+        variant: 'success',
       })
       
       // Reset form
@@ -216,6 +219,8 @@ export function ContactForm() {
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? 'Sending...' : 'Send Message'}
       </Button>
+      
+      
     </form>
   )
 }

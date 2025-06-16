@@ -3,7 +3,7 @@
 import { useScroll, useTransform, motion } from 'framer-motion';
 import { useRef } from 'react';
 
-export const TextReveal = ({text}: {text: string}) => {
+export const TextReveal = ({ text }: { text: string }) => {
     const container = useRef<HTMLDivElement | null>(null);
     const { scrollYProgress } = useScroll({
         target: container,
@@ -19,6 +19,7 @@ export const TextReveal = ({text}: {text: string}) => {
                 {
                     word.split("").map((letter, i) => {
                         return <motion.span
+                            key={`${letter}-${i}`}
                             initial={{ opacity: 0, y: -50 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.01 * i, ease: [0.33, 1, 0.68, 2] }}

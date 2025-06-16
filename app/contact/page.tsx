@@ -75,6 +75,7 @@ export default function ContactPage() {
           <h2 className="text-2xl font-bold mb-4">Send Us a Message</h2>
           <ContactForm />
         </div>
+        
       </section>
       
       {/* FAQ Section */}
