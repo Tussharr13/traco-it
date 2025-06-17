@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -155,42 +155,50 @@ export default function PackageDetailsPage() {
         throw new Error(result.error || "Failed to submit review");
       }
 
-      alert("Review submitted successfully!");
+      toast({
+        title: "Review submitted successfully!",
+        description: "Thank you for your feedback.",
+        variant: "success",
+      });
+      fetchReviews();
       setRating(0);
       setReviewText("");
 
     } catch (error) {
       console.error("Error submitting review:", error);
       if (error instanceof Error) {
-        alert(error.message);
+        toast({
+          title: "Error submitting review",
+          description: error.message,
+          variant: "destructive",
+        })
       } else {
         alert("Something went wrong while submitting the review.");
       }
     }
   };
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("reviews")
-          .select("rating, review_text, created_at, profile_id")
-          .eq("package_id", pkg?.id)
-          .order("created_at", { ascending: false });
+  const fetchReviews = useCallback(async () => {
+  try {
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("rating, review_text, created_at, profile_id")
+      .eq("package_id", pkg?.id)
+      .order("created_at", { ascending: false });
 
-        if (error) throw error;
+    if (error) throw error;
 
-        setReviews(data);
-      } catch (error) {
-        console.error("Error fetching reviews:", error);
-      }
-    };
+    setReviews(data);
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+  }
+}, [pkg?.id]);
 
-    if (pkg) {
-      fetchReviews();
-    }
-
-  }, [pkg?.id, handleReviewSubmit])
+useEffect(() => {
+  if (pkg?.id) {
+    fetchReviews();
+  }
+}, [pkg?.id, fetchReviews]);
 
   useEffect(() => {
     const fetchUserType = async () => {

@@ -1,9 +1,8 @@
 "use client"
 
-import type React from "react"
-
 import { createContext, useContext, useEffect, useState } from "react"
-import { supabase, type UserDetails } from "@/app/lib/supabase"
+import { useUser, useSession, useSupabaseClient } from "@supabase/auth-helpers-react"
+import type { UserDetails } from "@/app/lib/supabase"
 import { toast } from "@/hooks/use-toast"
 
 type AuthContextType = {
@@ -17,45 +16,47 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const supabase = useSupabaseClient()
+  const session = useSession()
+  const rawUser = useUser()
   const [user, setUser] = useState<UserDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (session) {
-          const userDetails = await getUserDetails()
-          setUser(userDetails)
-        }
-      } catch (error) {
-        console.error("Error fetching user:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchUser()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        const userDetails = await getUserDetails()
-        setUser(userDetails)
-      } else {
+    const getUserDetails = async () => {
+      if (!rawUser) {
         setUser(null)
+        setLoading(false)
+        return
       }
-      setLoading(false)
-    })
 
-    return () => {
-      subscription.unsubscribe()
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", rawUser.id)
+        .single()
+
+      if (error) {
+        console.error("Failed to fetch user profile:", error)
+      }
+
+      setUser(
+        data
+          ? {
+              id: rawUser.id,
+              email: rawUser.email || "",
+              role: data.role || "user",
+              name: data.name,
+              avatar_url: data.avatar_url,
+              length: 0,
+            }
+          : null
+      )
+      setLoading(false)
     }
-  }, [])
+
+    getUserDetails()
+  }, [rawUser, supabase])
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -68,15 +69,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, role: string) => {
-    const { error, data } = await supabase.auth.signUp({ email, password, options: { data: { role } } })
+    const { error, data } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { role },
+      },
+    })
 
     if (!error && data.user) {
       await supabase.from("profiles").insert({
         id: data.user.id,
-        role: role as "user" | "seller" | "admin",
+        role: role,
         name: email.split("@")[0],
       })
     }
+
     toast({
       title: error ? "Sign Up Failed" : "Sign Up Successful",
       description: error ? error.message : "Welcome aboard!",
@@ -87,17 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-
     await supabase.auth.signOut()
-
-    localStorage.removeItem("sb-auth-token")
-
-    // 🧹 Clear cookies (client-side)
-  const cookieNames = ['sb-auth-token', 'sb-refresh-token']
-  cookieNames.forEach(name => {
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
-  })
-
     setUser(null)
     toast({
       title: "Sign Out Successful",
@@ -106,7 +104,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  return <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {
@@ -116,25 +118,3 @@ export function useAuth() {
   }
   return context
 }
-
-async function getUserDetails(): Promise<UserDetails | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) return null
-
-  const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-
-  return data
-    ? {
-      id: user.id,
-      email: user.email || "",
-      role: data.role || "user",
-      name: data.name,
-      avatar_url: data.avatar_url,
-      length: 0, // Add a default value for the length property
-    }
-    : null
-}
-
