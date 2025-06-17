@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/app/contexts/auth-context"
 import { supabase } from "@/app/lib/supabase"
 import { Check, Eye, Package, User, Users, DollarSign, X, AlertCircle } from "lucide-react"
@@ -85,7 +85,7 @@ interface MonthlyData {
 export default function AdminDashboard() {
   const { user } = useAuth()
   const router = useRouter()
-  const { toast } = useToast()
+  // const { toast } = useToast()
   const [pendingPackages, setPendingPackages] = useState<TravelPackage[]>([])
   const [sellers, setSellers] = useState<Seller[]>([])
   const [loading, setLoading] = useState(true)
@@ -437,6 +437,7 @@ export default function AdminDashboard() {
       toast({
         title: "Package approved",
         description: "The package has been approved and is now visible to users.",
+        variant: "success",
       })
 
       setIsPackageDetailsOpen(false)
@@ -467,6 +468,7 @@ export default function AdminDashboard() {
       toast({
         title: "Package rejected",
         description: "The package has been rejected and removed from the system.",
+        variant:"success"
       })
 
       setIsPackageDetailsOpen(false)

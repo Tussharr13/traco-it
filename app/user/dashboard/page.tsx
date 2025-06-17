@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/app/contexts/auth-context"
 import { supabase } from "@/app/lib/supabase"
 import { Calendar, Clock, MapPin, User } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 interface Booking {
   id: string
@@ -126,6 +127,24 @@ export default function UserDashboard() {
     })
   }
 
+  const handleCancelBooking = async (bookingId: string) => {
+
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ status: "cancelled" })
+        .eq("id", bookingId)
+
+      if (error) throw error
+
+      setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status: "cancelled" } : b)))
+      toast({ title: "Booking cancelled successfully", variant: "success" })
+    } catch (error) {
+      console.error("Error cancelling booking:", error)
+      toast({ title: "Failed to cancel booking", variant: "destructive" })
+    }
+  }
+
   return (
     <div className="container py-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -222,7 +241,7 @@ export default function UserDashboard() {
                             View Package
                           </Button>
                           {booking.status === "pending" && (
-                            <Button variant="destructive" size="sm">
+                            <Button onClick={() => handleCancelBooking(booking.id)} variant="destructive" size="sm">
                               Cancel
                             </Button>
                           )}

@@ -7,10 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/contexts/auth-context";
 import { supabase } from "@/app/lib/supabase";
 import { Clock, MapPin, Star, Check, X, Info, Package } from "lucide-react";
+import { toast } from "@/hooks/use-toast"
 
 interface Package {
   id: string;
@@ -46,7 +46,7 @@ interface PackageDialogProps {
 export default function PackageDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { toast } = useToast();
+  // const { toast } = useToast();
   const { user } = useAuth();
   const [pkg, setPkg] = useState<Package | null>(null);
   const [loading, setLoading] = useState(true);
@@ -245,6 +245,7 @@ export default function PackageDetailsPage() {
       toast({
         title: "Booking successful!",
         description: "Your booking has been confirmed.",
+        variant: "success",
       });
 
       router.push("/user/dashboard");

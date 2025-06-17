@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/app/contexts/auth-context";
 import { supabase } from "@/app/lib/supabase";
 import {
@@ -110,7 +110,6 @@ interface Booking {
 export default function SellerDashboard() {
   const { user } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
   const [packages, setPackages] = useState<TravelPackage[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -294,6 +293,7 @@ export default function SellerDashboard() {
       toast({
         title: "Package added successfully",
         description: "Your package has been submitted for approval.",
+        variant: "success",
       });
 
       setPackages((prev) => [data[0], ...prev]);
@@ -336,6 +336,7 @@ export default function SellerDashboard() {
       toast({
         title: "Booking Confirmed",
         description: "The booking has been successfully confirmed.",
+        variant: "success",
       });
 
       setBookings((prev) =>
@@ -391,6 +392,7 @@ export default function SellerDashboard() {
       toast({
         title: "Package updated successfully",
         description: "Your package details have been updated.",
+        variant: "success",
       });
 
       setPackages((prev) =>
@@ -438,6 +440,7 @@ export default function SellerDashboard() {
       toast({
         title: "Package Deleted",
         description: "The package has been successfully deleted.",
+        variant: "success",
       });
     }
   };
@@ -451,6 +454,12 @@ export default function SellerDashboard() {
 
       if (error) throw error;
 
+      toast({
+        title: "Booking Cancelled",
+        description: "The booking has been successfully cancelled.",
+        variant: "success",
+      });
+
       setBookings((prev) =>
         prev.map((booking) =>
           booking.id === bookingId ? { ...booking, status: "cancelled" } : booking
@@ -458,6 +467,11 @@ export default function SellerDashboard() {
       );
     } catch (error) {
       console.error("Error confirming booking:", error);
+      toast({
+        title: "Failed to Cancel Booking",
+        description: "There was an error cancelling the booking. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
