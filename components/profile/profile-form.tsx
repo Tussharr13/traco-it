@@ -7,10 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useToast } from '@/components/ui/use-toast'
+import { toast } from '@/hooks/use-toast'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { ImageUpload } from "@/components/ui/image-upload";
 
 interface ProfileFormProps {
   initialProfile: any
@@ -19,9 +20,10 @@ interface ProfileFormProps {
 export function ProfileForm({ initialProfile }: ProfileFormProps) {
   const [profile, setProfile] = useState(initialProfile)
   const [isSaving, setIsSaving] = useState(false)
-  const { toast } = useToast()
+  const [showUploader, setShowUploader] = useState(false);
+
   const supabase = createClientComponentClient()
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setProfile((prev: any) => ({
@@ -29,25 +31,26 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       [name]: value
     }))
   }
-  
+
   const handleSave = async () => {
     try {
       setIsSaving(true)
-      
+
       const { error } = await supabase
         .from('profiles')
         .update({
-          name: profile.name,
+          user_name: profile.user_name,
           bio: profile.bio,
           avatar_url: profile.avatar_url
         })
         .eq('id', profile.id)
-      
+
       if (error) throw error
-      
+
       toast({
         title: 'Profile Updated',
         description: 'Your profile has been updated successfully',
+        variant: 'success',
       })
     } catch (error) {
       toast({
@@ -60,7 +63,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
       setIsSaving(false)
     }
   }
-  
+
   return (
     <Tabs defaultValue="personal">
       <TabsList className="mb-6">
@@ -68,7 +71,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
         <TabsTrigger value="security">Security</TabsTrigger>
         <TabsTrigger value="preferences">Preferences</TabsTrigger>
       </TabsList>
-      
+
       <TabsContent value="personal">
         <Card>
           <CardHeader>
@@ -84,19 +87,46 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                   <AvatarImage src={profile.avatar_url} alt={profile.name} />
                   <AvatarFallback>{profile.name?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
-                <Button variant="outline" size="sm">
-                  Change Avatar
-                </Button>
+
+                {/* Toggle Uploader */}
+                {showUploader ? (
+                  <ImageUpload
+                    currentImages={profile.avatar_url ? [profile.avatar_url] : []}
+                    maxImages={1}
+                    onUploadComplete={(urls) => {
+                      const newAvatar = urls[0];
+                      setProfile((prev: any) => ({
+                        ...prev,
+                        avatar_url: newAvatar,
+                      }));
+                      setShowUploader(false);
+                      toast({
+                        title: "Avatar uploaded",
+                        description: "New avatar has been added. Don’t forget to save.",
+                        variant: "success",
+                      });
+                    }}
+                  />
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowUploader(true)}
+                  >
+                    Change Avatar
+                  </Button>
+                )}
               </div>
-              
+
+
               <div className="flex-1 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="name">Username</Label>
                     <Input
-                      id="name"
-                      name="name"
-                      value={profile.name || ''}
+                      id="user_name"
+                      name="user_name"
+                      value={profile.user_name || ''}
                       onChange={handleChange}
                     />
                   </div>
@@ -104,7 +134,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
-                      value={profile.email || ''}
+                      value={profile.name || ''}
                       disabled
                     />
                     <p className="text-xs text-muted-foreground">
@@ -112,7 +142,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="bio">Bio</Label>
                   <Textarea
@@ -126,7 +156,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end">
               <Button onClick={handleSave} disabled={isSaving}>
                 {isSaving ? 'Saving...' : 'Save Changes'}
@@ -135,7 +165,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
           </CardContent>
         </Card>
       </TabsContent>
-      
+
       <TabsContent value="security">
         <Card>
           <CardHeader>
@@ -178,7 +208,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 <Button>Update Password</Button>
               </div>
             </div>
-            
+
             <div className="space-y-4 pt-6">
               <div>
                 <h3 className="text-lg font-medium">Two-Factor Authentication</h3>
@@ -197,7 +227,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
           </CardContent>
         </Card>
       </TabsContent>
-      
+
       <TabsContent value="preferences">
         <Card>
           <CardHeader>
@@ -235,7 +265,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     />
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Marketing Emails</p>
@@ -255,7 +285,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                     />
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Travel Tips & Guides</p>
@@ -277,7 +307,7 @@ export function ProfileForm({ initialProfile }: ProfileFormProps) {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-end">
               <Button>Save Preferences</Button>
             </div>

@@ -4,12 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/app/contexts/auth-context";
 import { supabase } from "@/app/lib/supabase";
-import { Clock, MapPin, Star, Check, X, Info, Package } from "lucide-react";
+import { Clock, MapPin, Star, Check, X, Info, Package, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast"
 
 interface Package {
@@ -34,6 +35,10 @@ interface Review {
   review_text: string;
   created_at: string;
   profile_id: string;
+  profiles?: {
+    avatar_url: string;
+    user_name: string;
+  };
 };
 
 interface PackageDialogProps {
@@ -179,26 +184,35 @@ export default function PackageDetailsPage() {
   };
 
   const fetchReviews = useCallback(async () => {
-  try {
-    const { data, error } = await supabase
-      .from("reviews")
-      .select("rating, review_text, created_at, profile_id")
-      .eq("package_id", pkg?.id)
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select(
+          `rating,
+        review_text,
+        created_at,
+        profile_id,
+        profiles (
+          avatar_url,
+          user_name
+        )`
+        )
+        .eq("package_id", pkg?.id)
+        .order("created_at", { ascending: false });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    setReviews(data);
-  } catch (error) {
-    console.error("Error fetching reviews:", error);
-  }
-}, [pkg?.id]);
+      setReviews(data);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  }, [pkg?.id]);
 
-useEffect(() => {
-  if (pkg?.id) {
-    fetchReviews();
-  }
-}, [pkg?.id, fetchReviews]);
+  useEffect(() => {
+    if (pkg?.id) {
+      fetchReviews();
+    }
+  }, [pkg?.id, fetchReviews]);
 
   useEffect(() => {
     const fetchUserType = async () => {
@@ -455,13 +469,14 @@ useEffect(() => {
                   {reviews.map((review, index) => (
                     <div key={index} className="mb-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="font-medium text-primary">
-                            {review.profile_id?.slice(0, 2).toUpperCase() || "JD"}
-                          </span>
-                        </div>
+                        <Avatar className="w-8 h-8">
+                          <AvatarImage src={review.profiles?.avatar_url || ''} />
+                          <AvatarFallback>
+                            {review.profile_id.charAt(0).toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
-                          <p className="font-medium">{review.profile_id}</p>
+                          <p className="font-medium">{review.profiles?.user_name || review.profile_id}</p>
                           <div className="flex items-center">
                             <div className="flex">
                               {[1, 2, 3, 4, 5].map((star) => (
