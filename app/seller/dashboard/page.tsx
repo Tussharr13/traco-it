@@ -68,6 +68,8 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 
 interface TravelPackage {
   id: string;
@@ -89,6 +91,7 @@ interface TravelPackage {
   inclusion: string[],
   exclusion: string[],
   final_price: number;
+  start_dates: string[];
 }
 
 interface Booking {
@@ -131,6 +134,7 @@ export default function SellerDashboard() {
     itinerary: { day: number; title: string; description: string }[];
     inclusion: string[];
     exclusion: string[];
+    start_dates?: string[];
   }>({
     title: "",
     description: "",
@@ -146,7 +150,13 @@ export default function SellerDashboard() {
     itinerary: [{ day: 1, title: "", description: "" }],
     inclusion: [] as string[],
     exclusion: [] as string[],
+    start_dates: [] as string[]
   });
+
+  const [selectedDates, setSelectedDates] = useState<Date[]>(
+    (newPackage.start_dates ?? []).map(d => new Date(d))
+  );
+
 
   // const [monthlyData, setMonthlyData] = useState<{ name: string; value: number }[]>([]);
   const [monthlyBooking, setMonthlyBooking] = useState<{ name: string; bookings: number }[]>([]);
@@ -157,6 +167,14 @@ export default function SellerDashboard() {
   // const [totalRevenue, setTotalRevenue] = useState(0);
 
   useEffect(() => {
+    if (isAddPackageOpen) {
+      // Reset selectedDates when modal opens
+      setSelectedDates([]);
+    }
+  }, [isAddPackageOpen]);
+
+
+  useEffect(() => {
     if (user) {
       fetchUserGrowthData(user.id);
       fetchPopularDestinationData(user.id);
@@ -164,7 +182,7 @@ export default function SellerDashboard() {
       fetchRevenueData(user.id);
     }
   }, [user]);
-  
+
   const handleAddItineraryLine = () => {
     setNewPackage((prev) => ({
       ...prev,
@@ -265,7 +283,7 @@ export default function SellerDashboard() {
         setBookings(bookingsData || []);
       } catch (error) {
         console.error("Error fetching data:", error);
-        
+
       } finally {
         setLoading(false);
       }
@@ -298,6 +316,7 @@ export default function SellerDashboard() {
 
       setPackages((prev) => [data[0], ...prev]);
       setIsAddPackageOpen(false);
+      setSelectedDates([]);
       setNewPackage({
         title: "",
         description: "",
@@ -316,6 +335,7 @@ export default function SellerDashboard() {
       });
     } catch (error) {
       console.error("Error adding package:", error);
+      setSelectedDates([]);
       toast({
         title: "Failed to add package",
         description: "There was an error adding your package. Please try again.",
@@ -414,6 +434,7 @@ export default function SellerDashboard() {
         itinerary: [{ day: 1, title: "", description: "" }],
         inclusion: [] as string[],
         exclusion: [] as string[],
+        start_dates: [] as string[],
       });
     } catch (error) {
       console.error("Error updating package:", error);
@@ -519,25 +540,25 @@ export default function SellerDashboard() {
         'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
       ];
-  
+
       const currentYear = new Date().getFullYear();
-      
+
       const { data: sellerPackages, error: packagesError } = await supabase
         .from("packages")
         .select("id")
         .eq("seller_id", sellerId);
-        
+
       if (packagesError) throw new Error(`Error fetching seller packages: ${packagesError.message}`);
-      
+
       if (!sellerPackages || sellerPackages.length === 0) {
         console.log("No packages found for this seller");
         setRevenueData(months.map(name => ({ name, revenue: 0 })));
         // setTotalRevenue(0);
         return;
       }
-      
+
       const packageIds = sellerPackages.map(pkg => pkg.id);
-  
+
       const { data: bookingsData, error: revenueError } = await supabase
         .from("bookings")
         .select("package_id, travelers, created_at")
@@ -545,50 +566,50 @@ export default function SellerDashboard() {
         .in("package_id", packageIds)
         .gte("created_at", `${currentYear}-01-01`)
         .lte("created_at", `${currentYear}-12-31`);
-  
+
       if (revenueError) throw new Error(`Error fetching booking revenue data: ${revenueError.message}`);
-  
+
       if (!bookingsData || bookingsData.length === 0) {
         console.log("No revenue data found for this seller");
         setRevenueData(months.map(name => ({ name, revenue: 0 })));
         // setTotalRevenue(0);
         return;
       }
-  
+
       const { data: packagePrices, error: pricesError } = await supabase
         .from("packages")
         .select("id, price")
         .in("id", packageIds);
-  
+
       if (pricesError) throw new Error(`Error fetching package prices: ${pricesError.message}`);
-  
+
       const priceMap = new Map(packagePrices.map(pkg => [pkg.id, pkg.price]));
-  
+
       const monthlyRevenue = Array(12).fill(0);
-  
+
       bookingsData.forEach(booking => {
         const bookingDate = new Date(booking.created_at);
         const month = bookingDate.getMonth();
         const price = priceMap.get(booking.package_id) || 0;
         monthlyRevenue[month] += price * booking.travelers;
       });
-  
+
       const revenueChartData = months.map((month, index) => ({
         name: month,
         revenue: monthlyRevenue[index]
       }));
 
       const totalRevenue = monthlyRevenue.reduce((sum, count) => sum + count, 0);
-  
+
       setRevenueData(revenueChartData);
       // setTotalRevenue(totalRevenue);
       console.log("Revenue Chart Data for seller:", revenueChartData);
-  
+
     } catch (error) {
       console.error("Error fetching revenue data:", error);
     }
   }
-  
+
 
   async function fetchBookingsData(sellerId: string) {
     try {
@@ -598,20 +619,20 @@ export default function SellerDashboard() {
       ];
 
       const currentYear = new Date().getFullYear();
-      
+
       const { data: sellerPackages, error: packagesError } = await supabase
         .from("packages")
         .select("id")
         .eq("seller_id", sellerId);
-        
+
       if (packagesError) throw new Error(`Error fetching seller packages: ${packagesError.message}`);
-      
+
       if (!sellerPackages || sellerPackages.length === 0) {
         console.log("No packages found for this seller");
         setMonthlyBooking(months.map(name => ({ name, bookings: 0 })));
         return;
       }
-      
+
       const packageIds = sellerPackages.map(pkg => pkg.id);
 
       const { data, error } = await supabase
@@ -651,17 +672,17 @@ export default function SellerDashboard() {
         .from("packages")
         .select("id, destination")
         .eq("seller_id", sellerId);
-        
+
       if (packagesError) throw new Error(`Error fetching seller packages: ${packagesError.message}`);
-      
+
       if (!sellerPackages || sellerPackages.length === 0) {
         console.log("No packages found for this seller");
         setDestinationData([]);
         return;
       }
-      
+
       const packageIds = sellerPackages.map(pkg => pkg.id);
-      
+
       const destinationMap = new Map(sellerPackages.map(pkg => [pkg.id, pkg.destination]));
 
       const { data: bookingsData, error } = await supabase
@@ -678,7 +699,7 @@ export default function SellerDashboard() {
       }
 
       const destinationCount: Record<string, number> = {};
-      
+
       bookingsData.forEach(booking => {
         const destination = destinationMap.get(booking.package_id);
         if (destination) {
@@ -705,21 +726,21 @@ export default function SellerDashboard() {
       ];
 
       const currentYear = new Date().getFullYear();
-      
+
       const { data: sellerPackages, error: packagesError } = await supabase
         .from("packages")
         .select("id")
         .eq("seller_id", sellerId);
-        
+
       if (packagesError) throw new Error(`Error fetching seller packages: ${packagesError.message}`);
-      
+
       if (!sellerPackages || sellerPackages.length === 0) {
         console.log("No packages found for this seller");
         setUserGrowthData(months.map(name => ({ name, users: 0 })));
         // setTotalUsers(0);
         return;
       }
-      
+
       const packageIds = sellerPackages.map(pkg => pkg.id);
 
       const { data: bookingsData, error } = await supabase
@@ -738,7 +759,7 @@ export default function SellerDashboard() {
       }
 
       const userFirstBooking: Record<string, Date> = {};
-      
+
       bookingsData.forEach(booking => {
         const bookingDate = new Date(booking.created_at);
         if (!userFirstBooking[booking.user_id] || bookingDate < userFirstBooking[booking.user_id]) {
@@ -747,7 +768,7 @@ export default function SellerDashboard() {
       });
 
       const monthlyData = Array(12).fill(0);
-      
+
       Object.values(userFirstBooking).forEach(date => {
         const month = date.getMonth();
         monthlyData[month]++;
@@ -1000,6 +1021,39 @@ export default function SellerDashboard() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="start_dates">
+                      Trip Start Dates <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="md:w-[23vw] rounded-md border p-4 overflow-auto">
+                      <DayPicker
+                        mode="multiple"
+                        selected={selectedDates}
+                        onSelect={(dates) => {
+                          setSelectedDates(dates || []);
+                          setNewPackage({
+                            ...newPackage,
+                            start_dates: (dates || []).map((d) =>
+                              d.toISOString().split("T")[0]
+                            ),
+                          });
+                        }}
+                        className=""
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Select one or more dates when this package will start.
+                      </p>
+                    </div>
+                    {selectedDates.length > 0 && (
+                      <ul className="text-sm text-muted-foreground pl-4 list-disc">
+                        {selectedDates.map((d, i) => (
+                          <li key={i}>{d.toLocaleDateString()}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+
                 </div>
 
                 <div className="space-y-2">
@@ -1012,7 +1066,7 @@ export default function SellerDashboard() {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <ImageUpload 
+                    <ImageUpload
                       currentImages={newPackage.images}
                       onUploadComplete={(urls) => {
                         setNewPackage(prev => ({
@@ -1020,7 +1074,7 @@ export default function SellerDashboard() {
                           images: urls
                         }));
                       }}
-                      maxImages={3}/>
+                      maxImages={3} />
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Upload a high-quality image that showcases your destination

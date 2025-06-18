@@ -10,8 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/app/contexts/auth-context";
 import { supabase } from "@/app/lib/supabase";
-import { Clock, MapPin, Star, Check, X, Info, Package, User } from "lucide-react";
+import { Clock, MapPin, Star, Check, X, Info, Package, User, ClipboardList, ArrowBigRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast"
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 
 interface Package {
   id: string;
@@ -29,6 +31,7 @@ interface Package {
   inclusion?: string[];
   exclusion?: string[];
   cancellation_policy?: string[];
+  start_dates?: string[];
 }
 interface Review {
   rating: number;
@@ -59,6 +62,9 @@ export default function PackageDetailsPage() {
   const [activeImage, setActiveImage] = useState(0);
   const [userType, setUserType] = useState<string | null>(null) // Track user type
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const availableDates = pkg?.start_dates?.map(d => new Date(d)) || [];
 
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -253,12 +259,22 @@ export default function PackageDetailsPage() {
       return;
     }
 
+    if(!selectedDate){
+      toast({
+        title: "Date required",
+        description: "Please select a date to book this package",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase.from("bookings").insert({
         destination: pkg?.destination,
         package_id: pkg?.id,
         user_id: user.id,
         travelers: travelers,
+        selected_date: selectedDate?.toISOString() || null,
         status: "pending",
       });
 
@@ -398,7 +414,7 @@ export default function PackageDetailsPage() {
           <Tabs defaultValue="itinerary">
             <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
-              <TabsTrigger value="inclusions">Inclusions</TabsTrigger>
+              <TabsTrigger value="inclusions">Policies</TabsTrigger>
               <TabsTrigger value="reviews">Reviews</TabsTrigger>
             </TabsList>
 
@@ -441,6 +457,19 @@ export default function PackageDetailsPage() {
                     {exclusion?.map((item, index) => (
                       <li key={index} className="flex items-start">
                         <X className="mr-2 h-4 w-4 text-red-500 mt-1 flex-shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-4 flex items-center">
+                    <ClipboardList className="mr-2 h-5 w-5 text-blue-500" /> Cancellation Policy
+                  </h3>
+                  <ul className="space-y-2">
+                    {cancellationPolicy?.map((item, index) => (
+                      <li key={index} className="flex items-start">
+                        <ArrowBigRight className="mr-2 h-4 w-4 text-blue-500 mt-1 flex-shrink-0" />
                         <span>{item}</span>
                       </li>
                     ))}
@@ -563,6 +592,55 @@ export default function PackageDetailsPage() {
                     </Button>
                   </div>
                 </div>
+                <div>
+                  <label htmlFor="date" className="block text-sm font-medium mb-2">
+                    Check the available package dates
+                  </label>
+
+                  <div className="flex items-center gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCalendarOpen(!calendarOpen)}
+                    >
+                      {selectedDate
+                        ? selectedDate.toLocaleDateString()
+                        : "Select a date"}
+                    </Button>
+
+                    {selectedDate && (
+                      <span className="text-sm text-muted-foreground">
+                        Selected: {selectedDate.toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+
+                  {calendarOpen && (
+                    <div className="mt-4 border rounded-md p-4 w-fit shadow">
+                      <DayPicker
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(date) => {
+                          setSelectedDate(date);
+                          setCalendarOpen(false);
+                        }}
+                        modifiers={{
+                          available: availableDates,
+                        }}
+                        modifiersClassNames={{
+                          available: "bg-green-100 text-green-800 font-medium",
+                        }}
+                        disabled={(date) =>
+                          !availableDates.some(
+                            (d) =>
+                              d.toISOString().split("T")[0] ===
+                              date.toISOString().split("T")[0]
+                          )
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+
 
                 <div className="bg-accent rounded-lg p-4">
                   {/* Original Price with Discount */}
