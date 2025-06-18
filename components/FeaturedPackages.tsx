@@ -32,7 +32,7 @@ export default function FeaturedPackages() {
         const fetchPackages = async () => {
             setLoading(true)
             try {
-                const { data, error } = await supabase.from("packages").select("*").eq("is_approved", true)
+                const { data, error } = await supabase.from("packages").select("*").eq("is_approved", true).limit(5)
                 if (error) throw error
                 setPackages(data || [])
             } catch (error) {
@@ -58,7 +58,7 @@ export default function FeaturedPackages() {
                     </Link>
                 </div>
 
-                <div className="flex md:grid overflow-x-auto md:overflow-visible scrollbar-hide md:grid-cols-2 lg:grid-cols-4 md:max-w-full mx-auto gap-5">
+                <div className="flex md:grid overflow-x-auto md:overflow-visible scrollbar-hide md:grid-cols-2 lg:grid-cols-5 md:max-w-full mx-auto gap-5">
                     {packages.map((destination) => {
                         const isHovered = hoveredId !== null
                         const isThisHovered = hoveredId === destination.id

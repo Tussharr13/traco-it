@@ -103,12 +103,12 @@ export default function RegisterPage() {
                         Seller - I want to list travel packages
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    {/* <div className="flex items-center space-x-2">
                       <RadioGroupItem value="admin" id="admin" />
                       <Label htmlFor="admin" className="font-normal">
                         admin - I want to manage trips
                       </Label>
-                    </div>
+                    </div> */}
                   </RadioGroup>
                 </div>
               </div>
