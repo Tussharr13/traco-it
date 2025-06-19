@@ -94,6 +94,19 @@ interface TravelPackage {
   start_dates: string[];
 }
 
+
+type FeatureKey =
+  | "accommodation"
+  | "meals"
+  | "transfers"
+  | "trip_captain"
+  | "first_aid"
+  | "luggage_support"
+  | "entry_tickets"
+  | "camping"
+  | "trek_lead";
+
+
 interface Booking {
   id: string;
   package_id: string;
@@ -111,6 +124,18 @@ interface Booking {
 }
 
 export default function SellerDashboard() {
+  const featureKeys: FeatureKey[] = [
+    "accommodation",
+    "meals",
+    "transfers",
+    "trip_captain",
+    "first_aid",
+    "luggage_support",
+    "entry_tickets",
+    "camping",
+    "trek_lead",
+  ];
+
   const { user } = useAuth();
   const router = useRouter();
   const [packages, setPackages] = useState<TravelPackage[]>([]);
@@ -150,12 +175,17 @@ export default function SellerDashboard() {
     itinerary: [{ day: 1, title: "", description: "" }],
     inclusion: [] as string[],
     exclusion: [] as string[],
-    start_dates: [] as string[]
+    start_dates: [] as string[],
   });
 
   const [selectedDates, setSelectedDates] = useState<Date[]>(
     (newPackage.start_dates ?? []).map(d => new Date(d))
   );
+
+  const [selectedFeatures, setSelectedFeatures] = useState<{
+    [key in FeatureKey]?: boolean;
+  }>({});
+
 
 
   // const [monthlyData, setMonthlyData] = useState<{ name: string; value: number }[]>([]);
@@ -170,8 +200,14 @@ export default function SellerDashboard() {
     if (isAddPackageOpen) {
       // Reset selectedDates when modal opens
       setSelectedDates([]);
+      setSelectedFeatures({});
     }
   }, [isAddPackageOpen]);
+
+  useEffect(() => {
+    console.log("Selected Dates Updated:", selectedDates);
+  }, [selectedDates]);
+
 
 
   useEffect(() => {
@@ -308,6 +344,31 @@ export default function SellerDashboard() {
 
       if (error) throw error;
 
+      const insertedPackage = data;
+
+      if (data[0]?.id) {
+        const { error: featuresError } = await supabase
+          .from("package_features")
+          .insert({
+            package_id: data[0]?.id,
+            accommodation: selectedFeatures.accommodation || false,
+            meals: selectedFeatures.meals || false,
+            transfers: selectedFeatures.transfers || false,
+            trip_captain: selectedFeatures.trip_captain || false,
+            first_aid: selectedFeatures.first_aid || false,
+            luggage_support: selectedFeatures.luggage_support || false,
+            entry_tickets: selectedFeatures.entry_tickets || false,
+            camping: selectedFeatures.camping || false,
+            trek_lead: selectedFeatures.trek_lead || false,
+          });
+
+        if (featuresError) {
+          console.error("Error inserting package features:", featuresError);
+          throw featuresError;
+        }
+      }
+
+
       toast({
         title: "Package added successfully",
         description: "Your package has been submitted for approval.",
@@ -317,6 +378,7 @@ export default function SellerDashboard() {
       setPackages((prev) => [data[0], ...prev]);
       setIsAddPackageOpen(false);
       setSelectedDates([]);
+      setSelectedFeatures({});
       setNewPackage({
         title: "",
         description: "",
@@ -336,6 +398,7 @@ export default function SellerDashboard() {
     } catch (error) {
       console.error("Error adding package:", error);
       setSelectedDates([]);
+      setSelectedFeatures({});
       toast({
         title: "Failed to add package",
         description: "There was an error adding your package. Please try again.",
@@ -374,10 +437,11 @@ export default function SellerDashboard() {
     }
   };
 
-  const handlePkgEdit = (pkgId: string) => {
+  const handlePkgEdit = async (pkgId: string) => {
     const pkgToEdit = packages.find((pkg) => pkg.id === pkgId);
     if (pkgToEdit) {
       const { final_price, ...editablePackage } = pkgToEdit;
+      console.log(editablePackage)
       setNewPackage({
         ...editablePackage,
         itinerary: Array.isArray(editablePackage.itinerary)
@@ -390,7 +454,43 @@ export default function SellerDashboard() {
         cancellation_policy: Array.isArray(editablePackage.cancellation_policy)
           ? editablePackage.cancellation_policy
           : [editablePackage.cancellation_policy || ""],
+        // start_dates: editablePackage.start_dates || [],
+        // start_dates: (editablePackage.start_dates || []).map((d => new Date(d).toISOString().split("T")[0])),
       });
+      setSelectedDates(
+        (editablePackage.start_dates || []).map(parseLocalDate)
+      );
+      console.log("Selected Dates for Calendar:", (editablePackage.start_dates || []).map(parseLocalDate));
+
+      // console.log("Selected Dates:", selectedDates);
+
+      // ✅ Step 2: Fetch features from Supabase
+      const { data: featureData, error } = await supabase
+        .from("package_features")
+        .select("*")
+        .eq("package_id", pkgId)
+        .single();
+
+      if (featureData) {
+        // Filter only valid keys
+        const features: { [key in FeatureKey]?: boolean } = {
+          accommodation: featureData.accommodation,
+          meals: featureData.meals,
+          transfers: featureData.transfers,
+          trip_captain: featureData.trip_captain,
+          first_aid: featureData.first_aid,
+          luggage_support: featureData.luggage_support,
+          entry_tickets: featureData.entry_tickets,
+          camping: featureData.camping,
+          trek_lead: featureData.trek_lead,
+        };
+
+        setSelectedFeatures(features);
+      } else if (error) {
+        console.error("Failed to fetch features:", error);
+        setSelectedFeatures({}); // fallback empty
+      }
+
       setFormStep(0);
       setIsAddPackageOpen(true);
     }
@@ -398,16 +498,38 @@ export default function SellerDashboard() {
 
   const handleUpdatePackage = async () => {
     try {
+      const formattedDates = selectedDates.map((d) => formatDateLocal(d));
+
       const { data, error } = await supabase
         .from("packages")
         .update({
           ...newPackage,
+          start_dates: formattedDates,
           seller_id: user?.id,
         })
         .eq("id", newPackage.id)
         .select();
 
       if (error) throw error;
+
+      await supabase
+        .from("package_features")
+        .upsert(
+          {
+            package_id: newPackage.id,
+            accommodation: selectedFeatures.accommodation || false,
+            meals: selectedFeatures.meals || false,
+            transfers: selectedFeatures.transfers || false,
+            trip_captain: selectedFeatures.trip_captain || false,
+            first_aid: selectedFeatures.first_aid || false,
+            luggage_support: selectedFeatures.luggage_support || false,
+            entry_tickets: selectedFeatures.entry_tickets || false,
+            camping: selectedFeatures.camping || false,
+            trek_lead: selectedFeatures.trek_lead || false,
+          },
+          { onConflict: "package_id" } // ensure it updates if already exists
+        );
+
 
       toast({
         title: "Package updated successfully",
@@ -436,6 +558,7 @@ export default function SellerDashboard() {
         exclusion: [] as string[],
         start_dates: [] as string[],
       });
+      setSelectedFeatures({});
     } catch (error) {
       console.error("Error updating package:", error);
       toast({
@@ -505,6 +628,20 @@ export default function SellerDashboard() {
     });
   };
 
+  const formatDateLocal = (date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0");
+    const day = `${date.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`; // "YYYY-MM-DD"
+  };
+
+  const parseLocalDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day); // local time
+  };
+
+
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -525,14 +662,14 @@ export default function SellerDashboard() {
   };
 
   const nextFormStep = () => {
-    setFormStep((prev) => Math.min(prev + 1, 3));
+    setFormStep((prev) => Math.min(prev + 1, 4));
   };
 
   const prevFormStep = () => {
     setFormStep((prev) => Math.max(prev - 1, 0));
   };
 
-  const formSteps = ["Basic Info", "Details", "Policies", "Review"];
+  const formSteps = ["Basic Info", "Details", "Policies", "Key Features", "Review"];
 
   async function fetchRevenueData(sellerId: string) {
     try {
@@ -1033,9 +1170,7 @@ export default function SellerDashboard() {
                           setSelectedDates(dates || []);
                           setNewPackage({
                             ...newPackage,
-                            start_dates: (dates || []).map((d) =>
-                              d.toISOString().split("T")[0]
-                            ),
+                            start_dates: (dates || []).map(formatDateLocal),
                           });
                         }}
                         className=""
@@ -1074,7 +1209,7 @@ export default function SellerDashboard() {
                           images: urls
                         }));
                       }}
-                      maxImages={3} />
+                      maxImages={10} />
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Upload a high-quality image that showcases your destination
@@ -1299,6 +1434,41 @@ export default function SellerDashboard() {
             {formStep === 3 && (
               <div className="space-y-6">
                 <div className="space-y-1">
+                  <h3 className="text-lg font-medium">Select Available Key Features</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Choose the features that are included in this travel package.
+                  </p>
+                </div>
+
+
+                <div className="pt-4 border-t">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                    {featureKeys.map((feature) => (
+                      <label key={feature} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="accent-black"
+                          checked={selectedFeatures[feature] || false}
+                          onChange={(e) =>
+                            setSelectedFeatures((prev) => ({
+                              ...prev,
+                              [feature]: e.target.checked,
+                            }))
+                          }
+                        />
+                        {feature.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </label>
+                    ))}
+
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {formStep === 4 && (
+              <div className="space-y-6">
+                <div className="space-y-1">
                   <h3 className="text-lg font-medium">Review Your Package</h3>
                   <p className="text-sm text-muted-foreground">
                     Review all details before submitting your package for
@@ -1402,7 +1572,7 @@ export default function SellerDashboard() {
                 )}
               </div>
               <div>
-                {formStep < 3 ? (
+                {formStep < 4 ? (
                   <Button onClick={nextFormStep} type="button">
                     Continue
                   </Button>

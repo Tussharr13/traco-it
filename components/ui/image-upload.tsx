@@ -15,7 +15,7 @@ export function ImageUpload({
   onUploadComplete, 
   currentImages, 
   className, 
-  maxImages = 3 
+  maxImages = 10 
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);

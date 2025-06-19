@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, JSX } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,10 +10,34 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/app/contexts/auth-context";
 import { supabase } from "@/app/lib/supabase";
-import { Clock, MapPin, Star, Check, X, Info, Package, User, ClipboardList, ArrowBigRight } from "lucide-react";
+import {
+  Clock, MapPin, Star, Check, X, Info, Package, User, ClipboardList, ArrowBigRight, ArrowRight, ArrowLeft, BedDouble,
+  Utensils,
+  BusFront,
+  Users,
+  ShieldCheck,
+  Briefcase,
+  Ticket,
+  TentTree,
+  MountainSnow,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast"
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
+
+
+const featureIcons: Record<string, JSX.Element> = {
+  accommodation: <BedDouble className="w-7 h-7 text-black" />,
+  meals: <Utensils className="w-7 h-7 text-black" />,
+  transfers: <BusFront className="w-7 h-7 text-black" />,
+  trip_captain: <Users className="w-7 h-7 text-black" />,
+  first_aid: <ShieldCheck className="w-7 h-7 text-black" />,
+  luggage_support: <Briefcase className="w-7 h-7 text-black" />,
+  entry_tickets: <Ticket className="w-7 h-7 text-black" />,
+  camping: <TentTree className="w-7 h-7 text-black" />,
+  trek_lead: <MountainSnow className="w-7 h-7 text-black" />,
+};
+
 
 interface Package {
   id: string;
@@ -56,7 +80,10 @@ export default function PackageDetailsPage() {
   const router = useRouter();
   // const { toast } = useToast();
   const { user } = useAuth();
+
   const [pkg, setPkg] = useState<Package | null>(null);
+  const [packageFeatures, setPackageFeatures] = useState<any | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [travelers, setTravelers] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
@@ -64,6 +91,7 @@ export default function PackageDetailsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+
   const availableDates = pkg?.start_dates?.map(d => new Date(d)) || [];
 
   const [rating, setRating] = useState(0);
@@ -76,15 +104,28 @@ export default function PackageDetailsPage() {
       setLoading(true);
 
       try {
-        const { data, error } = await supabase
+        const { data: packageData, error: packageError } = await supabase
           .from("packages")
           .select("*")
           .eq("id", params.id)
           .single();
 
-        if (error) throw error;
-        console.log(data)
-        setPkg(data);
+        if (packageError) throw packageError;
+
+        setPkg(packageData);
+
+        const { data: featureData, error: featureError } = await supabase
+          .from("package_features")
+          .select("*")
+          .eq("package_id", params.id)
+          .single();
+
+        if (featureError) {
+          console.warn("No feature data found or error:", featureError.message);
+          setPackageFeatures(null); // Optional fallback
+        } else {
+          setPackageFeatures(featureData);
+        }
       } catch (error) {
         console.error("Error fetching package:", error);
         // For demo purposes, let's add mock data that includes the package id.
@@ -259,7 +300,7 @@ export default function PackageDetailsPage() {
       return;
     }
 
-    if(!selectedDate){
+    if (!selectedDate) {
       toast({
         title: "Date required",
         description: "Please select a date to book this package",
@@ -344,47 +385,108 @@ export default function PackageDetailsPage() {
     <div className="container py-8">
       {/* Image Gallery */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="md:col-span-3 aspect-video overflow-hidden rounded-lg">
-          <img
-            src={pkg.images[activeImage] || "/placeholder.svg?height=600&width=800"}
-            alt={pkg.title}
-            className="w-full h-full object-cover"
-          />
+        {/* Left: Main Image + Thumbnails Below */}
+        <div className="md:col-span-3">
+          {/* Main Image with Arrows */}
+          <div className="relative aspect-video overflow-hidden rounded-lg mb-4">
+            {/* Left Arrow */}
+            {activeImage > 0 && (
+              <button
+                onClick={() => setActiveImage((prev) => prev - 1)}
+                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full z-10"
+              >
+                <ArrowLeft />
+              </button>
+            )}
+
+            {/* Right Arrow */}
+            {activeImage < pkg.images.length - 1 && (
+              <button
+                onClick={() => setActiveImage((prev) => prev + 1)}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 rounded-full z-10 text-white p-2"
+              >
+                <ArrowRight />
+              </button>
+            )}
+
+            <img
+              src={pkg.images[activeImage] || "/placeholder.svg?height=600&width=800"}
+              alt={pkg.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Scrollable Thumbnail Row */}
+          <div className="flex overflow-x-auto gap-2 justify-center">
+            {pkg.images.map((image, index) => (
+              <div
+                key={index}
+                className={`w-20 h-14 flex-shrink-0 rounded-md overflow-hidden cursor-pointer border-2 ${activeImage === index ? "border-primary" : "border-transparent"
+                  }`}
+                onClick={() => setActiveImage(index)}
+              >
+                <img
+                  src={image || "/placeholder.svg"}
+                  alt={`${pkg.title} - Thumbnail ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
-          {pkg.images.slice(0, 3).map((image, index) => (
-            <div
-              key={index}
-              className={`aspect-video overflow-hidden rounded-lg cursor-pointer border-2 ${activeImage === index ? "border-primary" : "border-transparent"
-                }`}
-              onClick={() => setActiveImage(index)}
-            >
-              <img
-                src={image || "/placeholder.svg"}
-                alt={`${pkg.title} - Image ${index + 1}`}
-                className="w-full h-full object-cover"
-              />
+        {/* Right: Key Points Section as Grid */}
+        {packageFeatures && (
+          <div className="md:col-span-1 px-5 py-5 hidden md:block">
+            <h2 className="text-2xl font-semibold mb-1 text-gray-800 pt-2">
+              What's Included
+            </h2>
+            <p className="text-md text-gray-500 mb-4">
+              This package offers the following key features for your comfort and convenience:
+            </p>
+            <ul className="space-y-3 text-sm text-gray-700">
+              {Object.entries(packageFeatures).map(([key, value]) => {
+                if (value === true && key in featureIcons) {
+                  return (
+                    <li key={key} className="flex items-center gap-3">
+                      <div className="text-black text-xl">{featureIcons[key]}</div>
+                      <span className="capitalize">{key.replace(/_/g, " ")}</span>
+                    </li>
+                  );
+                }
+                return null;
+              })}
+            </ul>
+          </div>
+        )}
+
+
+        {/* Key Points for mobile */}
+        {packageFeatures && (
+          <div className="block md:hidden mt-4">
+            <div className="border rounded-lg p-4">
+              <h2 className="text-lg font-semibold mb-2">Key Points</h2>
+              <ul className="space-y-2 text-sm text-gray-700">
+                {Object.entries(packageFeatures).map(([key, value]) => {
+                  if (value === true && key in featureIcons) {
+                    return (
+                      <li key={key} className="flex items-center gap-2">
+                        {featureIcons[key]}
+                        <span className="capitalize">
+                          {key.replace(/_/g, " ")}
+                        </span>
+                      </li>
+                    );
+                  }
+                  return null;
+                })}
+              </ul>
             </div>
-          ))}
-          {pkg.images.length > 3 && (
-            <div
-              className="aspect-video overflow-hidden rounded-lg cursor-pointer relative"
-              onClick={() => setActiveImage(3)}
-            >
-              <img
-                src={pkg.images[3] || "/placeholder.svg"}
-                alt={`${pkg.title} - Image 4`}
-                className="w-full h-full object-cover"
-              />
-              {pkg.images.length > 4 && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-medium">
-                  +{pkg.images.length - 4} more
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+
       </div>
+
 
       {/* Package Title and Basic Info */}
       <div className="mb-8">
