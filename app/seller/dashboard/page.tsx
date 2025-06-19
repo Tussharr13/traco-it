@@ -130,7 +130,7 @@ export default function SellerDashboard() {
     max_people: number;
     boarding_point: string;
     discount: number;
-    cancellation_policy: string | string[];
+    cancellation_policy: string[];
     itinerary: { day: number; title: string; description: string }[];
     inclusion: string[];
     exclusion: string[];
@@ -146,7 +146,7 @@ export default function SellerDashboard() {
     max_people: 1,
     boarding_point: "",
     discount: 0,
-    cancellation_policy: "",
+    cancellation_policy: [] as string[],
     itinerary: [{ day: 1, title: "", description: "" }],
     inclusion: [] as string[],
     exclusion: [] as string[],
@@ -328,7 +328,7 @@ export default function SellerDashboard() {
         max_people: 1,
         boarding_point: "",
         discount: 0,
-        cancellation_policy: "",
+        cancellation_policy: [] as string[],
         itinerary: [{ day: 1, title: "", description: "" }],
         inclusion: [] as string[],
         exclusion: [] as string[],
@@ -430,7 +430,7 @@ export default function SellerDashboard() {
         max_people: 1,
         boarding_point: "",
         discount: 0,
-        cancellation_policy: "",
+        cancellation_policy: [] as string[],
         itinerary: [{ day: 1, title: "", description: "" }],
         inclusion: [] as string[],
         exclusion: [] as string[],
@@ -827,7 +827,7 @@ export default function SellerDashboard() {
                 max_people: 1,
                 boarding_point: "",
                 discount: 0,
-                cancellation_policy: "",
+                cancellation_policy: [] as string[],
                 itinerary: [{ day: 1, title: "", description: "" }],
                 inclusion: [] as string[],
                 exclusion: [] as string[],
