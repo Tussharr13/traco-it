@@ -20,6 +20,8 @@ export default function RegisterPage() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [company, setCompany] = useState("")
+  const [phone, setPhone] = useState("")
   const [role, setRole] = useState<string>(defaultRole)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -32,7 +34,7 @@ export default function RegisterPage() {
     setError(null)
 
     try {
-      const result = await signUp(email, password, role)
+      const result = await signUp(email, password, role, company, phone)
 
       if ("error" in result && result.error) {
         setError(result.error.message)
@@ -75,6 +77,27 @@ export default function RegisterPage() {
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company">Company Name</Label>
+                  <Input
+                    id="company"
+                    placeholder="Your Travel Agency/Company Name"
+                    type="text"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     required
                   />
                 </div>

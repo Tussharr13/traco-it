@@ -9,7 +9,7 @@ type AuthContextType = {
   user: UserDetails | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
-  signUp: (email: string, password: string, role: string) => Promise<{ error: any }>
+  signUp: (email: string, password: string, role: string, company: string, phone: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
 }
 
@@ -43,13 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(
         data
           ? {
-              id: rawUser.id,
-              email: rawUser.email || "",
-              role: data.role || "user",
-              name: data.name,
-              avatar_url: data.avatar_url,
-              length: 0,
-            }
+            id: rawUser.id,
+            email: rawUser.email || "",
+            role: data.role || "user",
+            name: data.name,
+            avatar_url: data.avatar_url,
+            length: 0,
+          }
           : null
       )
       setLoading(false)
@@ -68,21 +68,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error }
   }
 
-  const signUp = async (email: string, password: string, role: string) => {
+  const signUp = async (email: string, password: string, role: string, company_name: string, phone_number: string) => {
     const { error, data } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { role },
+        data: { role, company_name, phone_number },
       },
     })
 
+    console.log("Sign Up Data:", data)
+
     if (!error && data.user) {
-      await supabase.from("profiles").insert({
+      const { error: insertError, data: data2 } = await supabase.from("profiles").upsert({
         id: data.user.id,
         role: role,
-        name: email.split("@")[0],
+        user_name: email.split("@")[0],
+        name: email,
+        company_name,
+        phone_number
+      }, {
+        onConflict: 'id' // ensures it updates by id
       })
+      if (insertError) {
+        console.error("Profile insert error:", insertError)
+      }
+      console.log("Profile Insert Data:", data2)
     }
 
     toast({

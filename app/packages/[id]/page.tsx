@@ -501,9 +501,9 @@ export default function PackageDetailsPage() {
             <span className="text-muted-foreground">{pkg.duration} days</span>
           </div>
           <div className="flex items-center">
-            <Star className="h-4 w-4 fill-primary text-primary mr-1" />
-            <span className="font-medium">4.8</span>
-            <span className="text-muted-foreground ml-1">(24 reviews)</span>
+            {/* <Star className="h-4 w-4 fill-primary text-primary mr-1" /> */}
+            {/* <span className="font-medium">4.8</span> */}
+            {/* <span className="text-muted-foreground ml-1">(24 reviews)</span> */}
           </div>
           <Badge variant="outline">{pkg.category}</Badge>
         </div>
