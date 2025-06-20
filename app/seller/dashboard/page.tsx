@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +49,7 @@ import {
   Clock,
   DollarSign,
   MapPin,
+  ChevronDown,
 } from "lucide-react";
 import {
   AreaChart,
@@ -185,7 +186,10 @@ export default function SellerDashboard() {
   const [selectedFeatures, setSelectedFeatures] = useState<{
     [key in FeatureKey]?: boolean;
   }>({});
-
+  
+  // const [showDropdown, setShowDropdown] = useState(false);
+  // const [filteredDestinations, setFilteredDestinations] = useState<string[]>([]);
+  // const dropdownRef = useRef<HTMLDivElement>(null);
 
 
   // const [monthlyData, setMonthlyData] = useState<{ name: string; value: number }[]>([]);
@@ -278,6 +282,45 @@ export default function SellerDashboard() {
       return { ...prev, cancellation_policy: updatedPolicy };
     });
   };
+
+    // Comprehensive list of Indian destinations
+  const indianDestinations = [
+    // Popular Tourist Destinations
+    'Goa', 'Kerala (Backwaters)', 'Rajasthan (Jaipur)', 'Rajasthan (Udaipur)', 'Rajasthan (Jodhpur)',
+    'Agra (Taj Mahal)', 'Delhi', 'Mumbai', 'Kolkata', 'Chennai', 'Bangalore', 'Hyderabad',
+    
+    // Hill Stations
+    'Shimla', 'Manali', 'Dharamshala', 'Mussoorie', 'Nainital', 'Darjeeling', 'Gangtok',
+    'Ooty', 'Kodaikanal', 'Munnar', 'Coorg', 'Mount Abu', 'Lansdowne', 'Kasauli',
+    
+    // Beach Destinations
+    'Goa (North)', 'Goa (South)', 'Pondicherry', 'Varkala', 'Kovalam', 'Puri', 'Digha',
+    'Gokarna', 'Tarkarli', 'Mandarmani', 'Andaman Islands', 'Lakshadweep',
+    
+    // Adventure & Trekking
+    'Leh Ladakh', 'Spiti Valley', 'Rishikesh', 'Auli', 'Valley of Flowers', 'Kedarnath',
+    'Badrinath', 'Rohtang Pass', 'Solang Valley', 'Triund', 'Hampta Pass',
+    
+    // Cultural & Historical
+    'Varanasi', 'Amritsar', 'Khajuraho', 'Ajanta Ellora', 'Hampi', 'Mysore', 'Madurai',
+    'Kanchipuram', 'Thanjavur', 'Mahabalipuram', 'Konark', 'Bhubaneswar',
+    
+    // Wildlife & Nature
+    'Jim Corbett National Park', 'Ranthambore', 'Kaziranga', 'Periyar', 'Bandhavgarh',
+    'Kanha', 'Sundarbans', 'Gir Forest', 'Bharatpur', 'Nagarhole',
+    
+    // Northeastern States
+    'Shillong', 'Cherrapunji', 'Aizawl', 'Imphal', 'Kohima', 'Itanagar', 'Tawang',
+    'Ziro Valley', 'Majuli Island', 'Mawlynnong',
+    
+    // Spiritual Destinations
+    'Haridwar', 'Vrindavan', 'Mathura', 'Bodh Gaya', 'Sarnath', 'Ajmer', 'Pushkar',
+    'Tirupati', 'Shirdi', 'Dwarka', 'Somnath', 'Rameshwaram',
+    
+    // Unique Destinations
+    'Rann of Kutch', 'Khardung La', 'Magnetic Hill', 'Living Root Bridges',
+    'Loktak Lake', 'Dal Lake', 'Chilika Lake', 'Pangong Tso', 'Tso Moriri'
+  ];
 
   useEffect(() => {
     if (!user) {
@@ -940,6 +983,40 @@ export default function SellerDashboard() {
     </Card>
   );
 
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [filteredDestinations, setFilteredDestinations] = useState<string[]>([]);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewPackage(prev => ({ ...prev, destination: value }));
+
+    if (value.length > 0) {
+      const filtered = indianDestinations.filter(dest =>
+        dest.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredDestinations(filtered);
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+    }
+  };
+
+  const selectDestination = (destination: string) => {
+    setNewPackage(prev => ({ ...prev, destination }));
+    setShowDropdown(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
     <div className="container py-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -1049,22 +1126,50 @@ export default function SellerDashboard() {
                       package's unique appeal.
                     </p>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative" ref={dropdownRef}>
                     <Label htmlFor="destination">
+                      <MapPin className="w-4 h-4 inline mr-1" />
                       Destination <span className="text-destructive">*</span>
                     </Label>
-                    <Input
-                      id="destination"
-                      value={newPackage.destination}
-                      onChange={(e) =>
-                        setNewPackage({
-                          ...newPackage,
-                          destination: e.target.value,
-                        })
-                      }
-                      placeholder="e.g. Bali, Indonesia"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="destination"
+                        value={newPackage.destination}
+                        onChange={handleDestinationChange}
+                        onFocus={() => {
+                          if (newPackage.destination.length > 0) {
+                            const filtered = indianDestinations.filter(dest =>
+                              dest.toLowerCase().includes(newPackage.destination.toLowerCase())
+                            );
+                            setFilteredDestinations(filtered);
+                            setShowDropdown(true);
+                          }
+                        }}
+                        placeholder="Start typing Indian destination..."
+                        required
+                        className="pr-10"
+                      />
+                      <ChevronDown className="absolute right-3 top-3.5 w-5 h-5 text-gray-400" />
+                    </div>
+                    {showDropdown && filteredDestinations.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {filteredDestinations.slice(0, 10).map((destination, index) => (
+                          <div
+                            key={index}
+                            onClick={() => selectDestination(destination)}
+                            className="px-4 py-3 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center gap-2"
+                          >
+                            <MapPin className="w-4 h-4 text-indigo-500" />
+                            <span className="text-gray-800">{destination}</span>
+                          </div>
+                        ))}
+                        {filteredDestinations.length > 10 && (
+                          <div className="px-4 py-2 text-sm text-gray-500 bg-gray-50">
+                            ... and {filteredDestinations.length - 10} more destinations
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
