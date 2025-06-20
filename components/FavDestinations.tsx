@@ -7,10 +7,10 @@ import Image from "next/image"
 export default function FavDestinations() {
 
 const categories = [
-    { name: "Agra", src: "https://s3.india.com/wp-content/uploads/2024/09/Mehtab-Bagh-1.jpg?impolicy=Medium_Widthonly&w=350&h=263" },
-    { name: "Vrindavan", src: "https://www.pilgrimagetour.in/blog/wp-content/uploads/2024/09/Prem-Mandir-Vrindavan.jpg" },
+    { name: "Nainital", src: "https://images.wanderon.in/blogs/new/2024/06/places-to-visit-in-nainital.jpeg" },
+    { name: "Manali", src: "https://images.unsplash.com/photo-1712388430474-ace0c16051e2?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuYWxpfGVufDB8fDB8fHww" },
     { name: "Mussoorie", src: "https://s3.india.com/wp-content/uploads/2024/05/Feature-Image_-Mussoorie-5.jpg?impolicy=Medium_Widthonly&w=350&h=263" },
-    { name: "Jim Corbett", src: "https://www.thehosteller.com/_next/image/?url=https%3A%2F%2Fstatic.thehosteller.com%2Fhostel%2Fimages%2Fimage.jpg%2Fimage-1725447883008.jpg&w=2048&q=75" },
+    { name: "Rishikesh", src: "https://captureatrip-cms-storage.s3.ap-south-1.amazonaws.com/Rishikesh_3c33f1475f.webp" },
   ]
 
 return(
