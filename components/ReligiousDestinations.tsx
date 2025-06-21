@@ -4,19 +4,19 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
-export default function FavDestinations() {
+export default function ReligiousDestinations() {
 
 const categories = [
-    { name: "Nainital", destination:"Nainital", src: "https://images.wanderon.in/blogs/new/2024/06/places-to-visit-in-nainital.jpeg" },
-    { name: "Manali", destination:"Manali, Himachal Pradesh",  src: "https://images.unsplash.com/photo-1712388430474-ace0c16051e2?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFuYWxpfGVufDB8fDB8fHww" },
-    { name: "Mussoorie", destination:"Mussoorie",  src: "https://s3.india.com/wp-content/uploads/2024/05/Feature-Image_-Mussoorie-5.jpg?impolicy=Medium_Widthonly&w=350&h=263" },
-    { name: "Rishikesh", destination:"Rishikesh",  src: "https://captureatrip-cms-storage.s3.ap-south-1.amazonaws.com/Rishikesh_3c33f1475f.webp" },
+    { name: "Varanasi", destination:"Varanasi", src: "https://www.visitkashi.in/backend/admin/product_images/172448788939.jpg" },
+    { name: "Vaishno Devi", destination:"Katra",  src: "https://www.indiantempletour.com/wp-content/uploads/2016/06/Vaishno-Devi-Yatra.webp" },
+    { name: "Vrindavan", destination:"Vrindavan",  src: "https://experiencemyindia.com/wp-content/uploads/2024/10/iskcon.jpg.webp" },
+    { name: "Haridwar", destination:"Haridwar",  src: "https://s7ap1.scene7.com/is/image/incredibleindia/ganga-ghat-haridwar1-attr-hero?qlt=82&ts=1726645870499" },
   ]
 
 return(
-    <section className="py-16 bg-slate-200">
+    <section className="py-16 bg-ice-blue">
         <div className="container mx-auto">
-          <h2 className="mb-12 text-neutral-900 text-4xl font-semibold font-glitten tracking-wider">Trending Grouptrips</h2>
+          <h2 className="mb-12 text-neutral-900 text-4xl font-semibold font-glitten tracking-wider">Trending Religious Trips</h2>
           <div className="flex md:grid overflow-x-auto md:overflow-visible gap-8 scrollbar-hide md:grid-cols-2 lg:grid-cols-4 md:max-w-full mx-auto">
             {categories.map((category, index) => (
               <Link

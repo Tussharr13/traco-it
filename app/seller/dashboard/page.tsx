@@ -1248,19 +1248,23 @@ export default function SellerDashboard() {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Beach Getaways">
-                          Beach Getaways
-                        </SelectItem>
-                        <SelectItem value="Mountain Escapes">
-                          Mountain Escapes
-                        </SelectItem>
-                        <SelectItem value="Cultural Tours">
-                          Cultural Tours
-                        </SelectItem>
-                        <SelectItem value="Adventure">Adventure</SelectItem>
-                        <SelectItem value="Luxury">Luxury</SelectItem>
-                        <SelectItem value="Budget">Budget</SelectItem>
+                        <SelectItem value="Beach Getaways">Beach Getaways</SelectItem>
+                        <SelectItem value="Mountain Escapes">Mountain Escapes</SelectItem>
+                        <SelectItem value="Desert Adventures">Desert Adventures</SelectItem>
+                        <SelectItem value="Forest & Wildlife">Forest & Wildlife</SelectItem>
+                        <SelectItem value="Island Holidays">Island Holidays</SelectItem>
+                        <SelectItem value="Hill Stations">Hill Stations</SelectItem>
+                        <SelectItem value="Adventure & Trekking">Adventure & Trekking</SelectItem>
+                        <SelectItem value="Cultural Tours">Cultural Tours</SelectItem>
+                        <SelectItem value="Pilgrimage & Spiritual">Pilgrimage & Spiritual</SelectItem>
+                        <SelectItem value="Wellness & Yoga Retreats">Wellness & Yoga Retreats</SelectItem>
+                        <SelectItem value="Luxury Escapes">Luxury Escapes</SelectItem>
+                        <SelectItem value="Budget Travel">Budget Travel</SelectItem>
+                        <SelectItem value="Family Friendly">Family Friendly</SelectItem>
+                        <SelectItem value="Solo Travel">Solo Travel</SelectItem>
+                        <SelectItem value="Weekend Getaways">Weekend Getaways</SelectItem>
                       </SelectContent>
+
                     </Select>
                   </div>
                   <div className="space-y-2">

@@ -29,35 +29,44 @@ interface Package {
 export default function ExplorePage() {
   const searchParams = useSearchParams()
   const initialCategory = searchParams.get("category") || ""
+  const initialDestination = searchParams.get("destination") || ""
 
   const [packages, setPackages] = useState<Package[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [priceRange, setPriceRange] = useState([0, 25000])
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? [initialCategory] : [])
+  const [selectedDestination, setSelectedDestination] = useState(initialDestination)
   const [filteredPackages, setFilteredPackages] = useState<Package[]>([])
   const [showPopup, setShowPopup] = useState(false)
 
-  const categories = ["Beach Getaways", "Mountain Escapes", "Cultural Tours", "Adventure", "Luxury", "Budget"]
+  const categories = [
+    "Beach Getaways",
+    "Mountain Escapes",
+    "Desert Adventures",
+    "Forest & Wildlife",
+    "Island Holidays",
+    "Hill Stations",
+    "Adventure & Trekking",
+    "Cultural Tours",
+    "Pilgrimage & Spiritual",
+    "Wellness & Yoga Retreats",
+    "Luxury Escapes",
+    "Budget Travel",
+    "Family Friendly",
+    "Solo Travel",
+    "Weekend Getaways"
+  ]
 
   useEffect(() => {
     const fetchPackages = async () => {
       setLoading(true)
-
       try {
         const { data, error } = await supabase.from("packages").select("*").eq("is_approved", true)
-
         if (error) throw error
-
         setPackages(data || [])
-        setFilteredPackages(data || [])
-        console.log(filteredPackages)
-        // console.log('packages set - ',packages)
       } catch (error) {
         console.error("Error fetching packages:", error)
-        // For demo purposes, let's add some mock data
-
-        console.log('mockpackages', filteredPackages)
       } finally {
         setLoading(false)
       }
@@ -67,14 +76,8 @@ export default function ExplorePage() {
   }, [])
 
   useEffect(() => {
-    console.log("Updated packages:", packages);
-  }, [packages]);
-
-  useEffect(() => {
-    // Apply filters
     let result = packages
 
-    // Search term filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
       result = result.filter(
@@ -85,25 +88,29 @@ export default function ExplorePage() {
       )
     }
 
-    // Price range filter
     result = result.filter((pkg) => pkg.price >= priceRange[0] && pkg.price <= priceRange[1])
 
-    // Category filter
     if (selectedCategories.length > 0) {
       result = result.filter((pkg) => selectedCategories.includes(pkg.category))
     }
 
+    if (selectedDestination) {
+      result = result.filter(
+        (pkg) => pkg.destination.toLowerCase() === selectedDestination.toLowerCase()
+      )
+      setSearchTerm(selectedDestination) // Update search term to match selected destination
+    }
+
     setFilteredPackages(result)
-  }, [searchTerm, priceRange, selectedCategories, packages])
+  }, [searchTerm, priceRange, selectedCategories, selectedDestination, packages])
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategories((prev) =>
-      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category],
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
     )
   }
 
   useEffect(() => {
-    // Check if popup was dismissed before
     if (typeof window !== "undefined" && localStorage.getItem("explorePopupDismissed") === "true") {
       setShowPopup(false)
       return
@@ -129,6 +136,7 @@ export default function ExplorePage() {
       localStorage.setItem("explorePopupDismissed", "true")
     }
   }
+
   return (
     <div className="container py-8 relative">
       {/* Popup Modal */}
@@ -141,8 +149,7 @@ export default function ExplorePage() {
               aria-label="Close"
             >
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  d="M18 6L6 18M6 6l12 12" />
+                <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
             <h2 className="text-xl font-bold mb-2 text-center">This month's Top Travel Agencies!</h2>
@@ -153,12 +160,21 @@ export default function ExplorePage() {
                 <li>3. Agency Three - Experts in adventure and outdoor tours.</li>
               </ol>
             </p>
-            {/* <Button onClick={() => setShowPopup(false)} className="w-full">Get Started</Button> */}
           </div>
         </div>
       )}
 
-      <h1 className="text-3xl font-bold mb-8">Explore Travel Packages</h1>
+      <h1 className="text-4xl font-bold mb-4">Explore Travel Packages</h1>
+      {selectedDestination && (
+        <div>
+          <p className="mb-3 text-muted-foreground text-md">
+            Showing results for destination: <strong className="text-xl">{selectedDestination}</strong>
+          </p>
+          <p className="mb-6 text-muted-foreground text-md">
+            Reset filter to see all packages or explore other destinations
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* Filters Sidebar */}
@@ -173,9 +189,7 @@ export default function ExplorePage() {
 
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="search" className="text-sm font-medium">
-                        Search
-                      </Label>
+                      <Label htmlFor="search" className="text-sm font-medium">Search</Label>
                       <div className="relative mt-1">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -232,6 +246,7 @@ export default function ExplorePage() {
                     setSearchTerm("")
                     setPriceRange([0, 25000])
                     setSelectedCategories([])
+                    setSelectedDestination("")
                   }}
                 >
                   Reset Filters
@@ -272,7 +287,7 @@ export default function ExplorePage() {
                 >
                   <div className="aspect-video w-full overflow-hidden">
                     <img
-                      src={pkg.images[0] ||  "/placeholder.svg?height=400&width=600"}
+                      src={pkg.images[0] || "/placeholder.svg?height=400&width=600"}
                       alt={pkg.title}
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
@@ -307,4 +322,3 @@ export default function ExplorePage() {
     </div>
   )
 }
-

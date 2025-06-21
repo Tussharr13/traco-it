@@ -9,6 +9,8 @@ import ExploreCategory from "@/components/ExploreCategory";
 import WhyChoose from "@/components/WhyChoose";
 import OurContent from "@/components/OurContent";
 import ComingSoonTravel from "@/components/ComingSoonTravel";
+import ReligiousDestinations from "@/components/ReligiousDestinations";
+import InternationalDestinations from "@/components/InternationalDestinations";
 
 interface Package {
   id: string
@@ -64,6 +66,12 @@ export default function Home() {
 
       {/* Favourite Destinations Section */}
       <FavDestinations />
+
+      {/* Religious Destinations Section */}
+      <ReligiousDestinations/>
+
+      {/* International Destinations Section */}
+      <InternationalDestinations/>
 
       {/* Featured Packages */}
       <FeaturedPackages />
