@@ -35,6 +35,7 @@ import {
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/app/contexts/auth-context";
 import { supabase } from "@/app/lib/supabase";
+import cities from "@/app/lib/cities";
 import {
   Eye,
   Check,
@@ -984,7 +985,7 @@ export default function SellerDashboard() {
   );
 
   const [showDropdown, setShowDropdown] = useState(false);
-  const [filteredDestinations, setFilteredDestinations] = useState<string[]>([]);
+  const [filteredCities, setFilteredCities] = useState<typeof cities>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -992,10 +993,12 @@ export default function SellerDashboard() {
     setNewPackage(prev => ({ ...prev, destination: value }));
 
     if (value.length > 0) {
-      const filtered = indianDestinations.filter(dest =>
-        dest.toLowerCase().includes(value.toLowerCase())
+      const filtered = cities.filter(
+        ({ city, state }) =>
+          city.toLowerCase().includes(value.toLowerCase()) ||
+          state.toLowerCase().includes(value.toLowerCase())
       );
-      setFilteredDestinations(filtered);
+      setFilteredCities(filtered);
       setShowDropdown(true);
     } else {
       setShowDropdown(false);
@@ -1138,34 +1141,36 @@ export default function SellerDashboard() {
                         onChange={handleDestinationChange}
                         onFocus={() => {
                           if (newPackage.destination.length > 0) {
-                            const filtered = indianDestinations.filter(dest =>
-                              dest.toLowerCase().includes(newPackage.destination.toLowerCase())
+                            const filtered = cities.filter(
+                              ({ city, state }) =>
+                                city.toLowerCase().includes(newPackage.destination.toLowerCase()) ||
+                                state.toLowerCase().includes(newPackage.destination.toLowerCase())
                             );
-                            setFilteredDestinations(filtered);
+                            setFilteredCities(filtered);
                             setShowDropdown(true);
                           }
                         }}
-                        placeholder="Start typing Indian destination..."
+                        placeholder="Start typing city or state..."
                         required
                         className="pr-10"
                       />
                       <ChevronDown className="absolute right-3 top-3.5 w-5 h-5 text-gray-400" />
                     </div>
-                    {showDropdown && filteredDestinations.length > 0 && (
+                    {showDropdown && filteredCities.length > 0 && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {filteredDestinations.slice(0, 10).map((destination, index) => (
+                        {filteredCities.slice(0, 10).map(({ city, state }, index) => (
                           <div
                             key={index}
-                            onClick={() => selectDestination(destination)}
+                            onClick={() => selectDestination(`${city}, ${state}`)}
                             className="px-4 py-3 hover:bg-indigo-50 cursor-pointer border-b border-gray-100 last:border-b-0 flex items-center gap-2"
                           >
                             <MapPin className="w-4 h-4 text-indigo-500" />
-                            <span className="text-gray-800">{destination}</span>
+                            <span className="text-gray-800">{city}, <span className="text-gray-500">{state}</span></span>
                           </div>
                         ))}
-                        {filteredDestinations.length > 10 && (
+                        {filteredCities.length > 10 && (
                           <div className="px-4 py-2 text-sm text-gray-500 bg-gray-50">
-                            ... and {filteredDestinations.length - 10} more destinations
+                            ... and {filteredCities.length - 10} more cities
                           </div>
                         )}
                       </div>
@@ -1248,23 +1253,19 @@ export default function SellerDashboard() {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Beach Getaways">Beach Getaways</SelectItem>
-                        <SelectItem value="Mountain Escapes">Mountain Escapes</SelectItem>
-                        <SelectItem value="Desert Adventures">Desert Adventures</SelectItem>
-                        <SelectItem value="Forest & Wildlife">Forest & Wildlife</SelectItem>
-                        <SelectItem value="Island Holidays">Island Holidays</SelectItem>
-                        <SelectItem value="Hill Stations">Hill Stations</SelectItem>
-                        <SelectItem value="Adventure & Trekking">Adventure & Trekking</SelectItem>
-                        <SelectItem value="Cultural Tours">Cultural Tours</SelectItem>
-                        <SelectItem value="Pilgrimage & Spiritual">Pilgrimage & Spiritual</SelectItem>
-                        <SelectItem value="Wellness & Yoga Retreats">Wellness & Yoga Retreats</SelectItem>
-                        <SelectItem value="Luxury Escapes">Luxury Escapes</SelectItem>
-                        <SelectItem value="Budget Travel">Budget Travel</SelectItem>
-                        <SelectItem value="Family Friendly">Family Friendly</SelectItem>
-                        <SelectItem value="Solo Travel">Solo Travel</SelectItem>
-                        <SelectItem value="Weekend Getaways">Weekend Getaways</SelectItem>
+                        <SelectItem value="Beach Getaways">
+                          Beach Getaways
+                        </SelectItem>
+                        <SelectItem value="Mountain Escapes">
+                          Mountain Escapes
+                        </SelectItem>
+                        <SelectItem value="Cultural Tours">
+                          Cultural Tours
+                        </SelectItem>
+                        <SelectItem value="Adventure">Adventure</SelectItem>
+                        <SelectItem value="Luxury">Luxury</SelectItem>
+                        <SelectItem value="Budget">Budget</SelectItem>
                       </SelectContent>
-
                     </Select>
                   </div>
                   <div className="space-y-2">
